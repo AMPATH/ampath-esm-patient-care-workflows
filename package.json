@@ -34,6 +34,10 @@
     "url": "git+https://github.com/AMPATH/ampath-esm-patient-care-workflows.git"
   },
   "homepage": "https://github.com/AMPATH/ampath-esm-patient-care-workflows#readme",
+  "files": [
+    "dist",
+    "translations"
+  ],
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
