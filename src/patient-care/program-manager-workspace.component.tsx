@@ -97,7 +97,6 @@ const ProgramManagerWorkspace: React.FC<ProgramManagerWorkspaceProps> = (props) 
     }, [locationUuid]);
 
 
-    console.log("enrollments",enrollments);
     // Active enrollments (matching patient care component)
     const activeEnrollments = useMemo(
         () => enrollments.filter((e) => !e.dateCompleted),
@@ -334,7 +333,6 @@ const ProgramManagerWorkspace: React.FC<ProgramManagerWorkspaceProps> = (props) 
         { key: 'location', header: t('programManager.location', 'Location') },
         { key: 'actions', header: t('programManager.actions', 'Actions') },
     ];
-    console.log("activeEnrollments",activeEnrollments);
     const enrollmentRows = activeEnrollments.map((enrollment) => ({
         id: enrollment.uuid,
         program: enrollment.program.display,

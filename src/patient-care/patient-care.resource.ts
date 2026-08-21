@@ -1,7 +1,7 @@
 import useSWR from 'swr';
 import { openmrsFetch, restBaseUrl, useConfig } from '@openmrs/esm-framework';
 import dayjs from 'dayjs';
-import { Config } from '../config-schema';
+import type { Config } from '../config-schema';
 
 export function usePatientProgramConfig(patientUuid: string) {
     const config = useConfig<Config>();
@@ -44,7 +44,7 @@ export function useEnrollments(patientUuid: string) {
             enrollments = responseData.results;
         }
     }
-console.log("enrollments api",enrollments);
+
     return {
         enrollments,
         error,

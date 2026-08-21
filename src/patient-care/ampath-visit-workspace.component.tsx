@@ -51,7 +51,45 @@ const AmpathVisitWorkspace: React.FC<AmpathVisitWorkspaceProps> = (props) => {
         setSelectedLocation(locationUuid);
         setSelectedVisitType(''); // Reset visit type selection when location changes
     };
-  
+
+    // Fetch visit types from the endpoint - use selectedLocation or sessionLocation
+    // Hooks must run unconditionally; SWR keys are null when required IDs are missing.
+    const locationForFetch = selectedLocation || sessionLocation?.uuid || '';
+    const { allowedVisitTypes, isLoading: isLoadingVisitTypes } = usePatientProgramVisitTypes(
+        patientUuid || '',
+        programUuid || '',
+        enrollmentUuid || '',
+        locationForFetch
+    );
+
+    const { visits, mutate: mutateVisits } = useVisits(patientUuid || '');
+
+    // Get visit type UUIDs from allowed visit types
+    const visitTypeUuids = useMemo(() => {
+        if (!allowedVisitTypes || !Array.isArray(allowedVisitTypes) || allowedVisitTypes.length === 0) {
+            return [];
+        }
+        return allowedVisitTypes.map(vt => vt.uuid);
+    }, [allowedVisitTypes]);
+
+    // Filter visits by visit types and get active visit if exists
+    const activeVisit = useMemo(() => {
+        if (!visits || visits.length === 0 || visitTypeUuids.length === 0) return null;
+
+        // Filter visits that match the allowed visit types and are active
+        const matchingActiveVisits = visits.filter((v) => {
+            const visitTypeUuid = v.visitType?.uuid;
+            return !v.stopDatetime && visitTypeUuid && visitTypeUuids.includes(visitTypeUuid);
+        });
+
+        if (matchingActiveVisits.length === 0) return null;
+
+        // Sort by startDatetime descending to get the latest first
+        return matchingActiveVisits.sort((a, b) =>
+            new Date(b.startDatetime).getTime() - new Date(a.startDatetime).getTime()
+        )[0];
+    }, [visits, visitTypeUuids]);
+
     if (!patientUuid || !programUuid || !enrollmentUuid) {
         return (
             <Workspace2
@@ -68,43 +106,6 @@ const AmpathVisitWorkspace: React.FC<AmpathVisitWorkspaceProps> = (props) => {
             </Workspace2>
         );
     }
-
-    // Fetch visit types from the endpoint - use selectedLocation or sessionLocation
-    const locationForFetch = selectedLocation || sessionLocation?.uuid || '';
-    const { allowedVisitTypes, isLoading: isLoadingVisitTypes } = usePatientProgramVisitTypes(
-        patientUuid,
-        programUuid,
-        enrollmentUuid,
-        locationForFetch
-    );
-  
-    const { visits, isLoading: isLoadingVisits, mutate: mutateVisits } = useVisits(patientUuid);
-
-    // Get visit type UUIDs from allowed visit types
-    const visitTypeUuids = useMemo(() => {
-        if (!allowedVisitTypes || !Array.isArray(allowedVisitTypes) || allowedVisitTypes.length === 0) {
-            return [];
-        }
-        return allowedVisitTypes.map(vt => vt.uuid);
-    }, [allowedVisitTypes]);
-
-    // Filter visits by visit types and get active visit if exists
-    const activeVisit = useMemo(() => {
-        if (!visits || visits.length === 0 || visitTypeUuids.length === 0) return null;
-        
-        // Filter visits that match the allowed visit types and are active
-        const matchingActiveVisits = visits.filter((v) => {
-            const visitTypeUuid = v.visitType?.uuid;
-            return !v.stopDatetime && visitTypeUuid && visitTypeUuids.includes(visitTypeUuid);
-        });
-        
-        if (matchingActiveVisits.length === 0) return null;
-        
-        // Sort by startDatetime descending to get the latest first
-        return matchingActiveVisits.sort((a, b) => 
-            new Date(b.startDatetime).getTime() - new Date(a.startDatetime).getTime()
-        )[0];
-    }, [visits, visitTypeUuids]);
 
     const handleStartVisit = async () => {
         if (!selectedVisitType) {

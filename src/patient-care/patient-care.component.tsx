@@ -48,16 +48,15 @@ const ProgramTabPanel: React.FC<ProgramTabPanelProps> = ({
         locationUuid
     );
 
-    // Get all active visit type UUIDs
-    const activeVisitTypeUuids = new Set(
-        activeVisits
-            .map((v) => v.visitType?.uuid)
-            .filter((uuid): uuid is string => !!uuid)
-    );
-
     // Determine which forms to show based on allowedVisitTypes and allowedEncounters
     const allowedForms = useMemo(() => {
         if (!allowedVisitTypes || allowedVisitTypes.length === 0 || !forms) return [];
+
+        const activeVisitTypeUuids = new Set(
+            activeVisits
+                .map((v) => v.visitType?.uuid)
+                .filter((uuid): uuid is string => !!uuid)
+        );
 
         // Check if any active visit type matches any of the program's allowed visit types
         const hasMatchingActiveVisit = allowedVisitTypes.some((vt) =>
@@ -102,7 +101,7 @@ const ProgramTabPanel: React.FC<ProgramTabPanelProps> = ({
         });
 
         return formsList;
-    }, [allowedVisitTypes, forms, activeVisitTypeUuids]);
+    }, [allowedVisitTypes, forms, activeVisits]);
 
     // Filter forms based on search text
     const filteredForms = useMemo(() => {
