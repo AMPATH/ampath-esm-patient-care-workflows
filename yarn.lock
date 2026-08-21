@@ -61,18 +61,21 @@ __metadata:
     react-router-dom: "npm:^6.14.1"
     rxjs: "npm:^6.6.7"
     swc-loader: "npm:^0.2.3"
+    swr: "npm:^2.2.5"
     turbo: "npm:^2.5.2"
     typescript: "npm:^5.0.0"
     webpack: "npm:5.105.3"
     webpack-cli: "npm:^6.0.1"
   peerDependencies:
-    "@openmrs/esm-framework": "*"
-    "@openmrs/esm-patient-common-lib": "*"
+    "@openmrs/esm-framework": 10.x
+    "@openmrs/esm-patient-common-lib": 12.x
     dayjs: 1.x
+    i18next: 25.x
     react: 18.x
     react-i18next: 16.x
     react-router-dom: 6.x
     rxjs: 6.x
+    swr: 2.x
   languageName: unknown
   linkType: soft
 
@@ -1402,21 +1405,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@internationalized/date@npm:^3.12.3":
+"@internationalized/date@npm:3.12.3":
   version: 3.12.3
   resolution: "@internationalized/date@npm:3.12.3"
   dependencies:
     "@swc/helpers": "npm:^0.5.0"
   checksum: 10/2c4ce86ac5aec2f9f6799cd455b776ab8750238059d1ed031f866c1f7bd7799fc6f938d46a328066989e1f24f5f9c10d4bfad3b2cab45fba0ce8fbb369ef7e1e
-  languageName: node
-  linkType: hard
-
-"@internationalized/date@npm:^3.8.0, @internationalized/date@npm:^3.8.1":
-  version: 3.8.1
-  resolution: "@internationalized/date@npm:3.8.1"
-  dependencies:
-    "@swc/helpers": "npm:^0.5.0"
-  checksum: 10/caf718fd973386e6785852776f3b728f5adc855276b843ad57d7f72633397ac3daa6d91a68d4f6694dc15d19190e23de9977f55a996f3315cb36a8d3cc9719d8
   languageName: node
   linkType: hard
 
@@ -16647,6 +16641,18 @@ __metadata:
   peerDependencies:
     react: ^16.11.0 || ^17.0.0 || ^18.0.0
   checksum: 10/f02b3bd5a198a0f62f9a53d7c0528c4a58aa61a43310bea169614b6e873dadb52599e856ef0775405b6aa7409835343da0cf328948aa892aa309bf4b7e7d6902
+  languageName: node
+  linkType: hard
+
+"swr@npm:^2.2.5":
+  version: 2.5.1
+  resolution: "swr@npm:2.5.1"
+  dependencies:
+    dequal: "npm:^2.0.3"
+    use-sync-external-store: "npm:^1.6.0"
+  peerDependencies:
+    react: ^16.11.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+  checksum: 10/7ba8d069bfb2a24a76c4c572c7c517b6365182c35ba10f7ed72f16dc2c038e40cf398b6fa889112c421709df38ae26944f027b529aec133dd43ddf3f1dff19e1
   languageName: node
   linkType: hard
 
