@@ -1,7 +1,10 @@
 import { execSync } from 'node:child_process';
 
 try {
-  // NB for other places use '@openmrs/*@next'; here we want to ignore patient-common-lib
+  // Keep OpenMRS tooling and shared libs on the latest next tags so Module
+  // Federation shares the same @openmrs/esm-patient-common-lib singleton as
+  // the patient chart apps (12.x). Stale 11.x locks cause runtime errors like
+  // "useStartVisitIfNeeded is not a function".
   execSync(`yarn up --fixed '@openmrs/*@next' 'openmrs@next'`, {
     stdio: ['ignore', 'inherit', 'inherit'],
     windowsHide: true,
