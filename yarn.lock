@@ -12,9 +12,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ampath/esm-patient-care-worflows-app@workspace:.":
+"@ampath/esm-patient-care-workflows-app@workspace:.":
   version: 0.0.0-use.local
-  resolution: "@ampath/esm-patient-care-worflows-app@workspace:."
+  resolution: "@ampath/esm-patient-care-workflows-app@workspace:."
   dependencies:
     "@carbon/react": "npm:^1.83.0"
     "@openmrs/esm-framework": "npm:next"

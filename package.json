@@ -1,5 +1,5 @@
 {
-  "name": "@ampath/esm-patient-care-worflows-app",
+  "name": "@ampath/esm-patient-care-workflows-app",
   "version": "4.0.0",
   "license": "MPL-2.0",
   "description": "An OpenMRS seed application for building microfrontends",

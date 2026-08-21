@@ -10,8 +10,8 @@ on:
       - created
 
 env:
-  ESM_NAME: "@ampath/esm-patient-care-worflows-app"
-  JS_NAME: "ampath-esm-patient-care-worflows-app.js"
+  ESM_NAME: "@ampath/esm-patient-care-workflows-app"
+  JS_NAME: "ampath-esm-patient-care-workflows-app.js"
 
 jobs:
   build:

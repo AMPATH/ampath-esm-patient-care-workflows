@@ -9,10 +9,10 @@ import { createDashboardLink } from '@openmrs/esm-patient-common-lib';
 import { patientChartExtensionMeta } from './dashboard.meta';
 import { configSchema } from './config-schema';
 
-const moduleName = '@ampath/esm-patient-care-worflows-app';
+const moduleName = '@ampath/esm-patient-care-workflows-app';
 
 const options = {
-  featureName: 'patient-care-worflows',
+  featureName: 'patient-care-workflows',
   moduleName,
 };
 
