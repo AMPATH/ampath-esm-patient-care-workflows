@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
     Button,
@@ -6,6 +6,7 @@ import {
     FormGroup,
     Select,
     SelectItem,
+    ComboBox,
     DatePicker,
     DatePickerInput,
     DataTable,
@@ -21,12 +22,20 @@ import {
     ProgressIndicator,
     ProgressStep,
 } from '@carbon/react';
-import { showSnackbar, Workspace2, formatDatetime, useLayoutType } from '@openmrs/esm-framework';
+import {
+    showSnackbar,
+    Workspace2,
+    formatDatetime,
+    useLayoutType,
+    useSession,
+    LocationPicker,
+    openmrsFetch,
+    restBaseUrl,
+} from '@openmrs/esm-framework';
 import dayjs from 'dayjs';
 import {
     usePrograms,
     useEnrollments,
-    useLocations,
     usePatientProgramConfig,
     enrollPatientInProgram,
     disenrollPatientFromProgram,
@@ -35,28 +44,60 @@ import styles from './program-manager-workspace.scss';
 
 interface ProgramManagerWorkspaceProps {
     closeWorkspace: () => void;
-    patientUuid: string;
+    patientUuid?: string;
+    workspaceProps?: {
+        patientUuid?: string;
+    };
 }
 
 type WizardStep = 'select' | 'details' | 'review' | 'success';
 
-const ProgramManagerWorkspace: React.FC<ProgramManagerWorkspaceProps> = ({ closeWorkspace, patientUuid }) => {
+const ProgramManagerWorkspace: React.FC<ProgramManagerWorkspaceProps> = (props) => {
+    // In OpenMRS, workspace props are nested in workspaceProps
+    const workspaceProps = (props as any).workspaceProps || {};
+    const closeWorkspace = props.closeWorkspace;
+    const patientUuid = workspaceProps.patientUuid || props.patientUuid;
     const { t } = useTranslation();
     const layout = useLayoutType();
+    const { sessionLocation } = useSession();
     const [currentStep, setCurrentStep] = useState<WizardStep>('select');
     const [selectedProgram, setSelectedProgram] = useState<string>('');
     const [selectedProgramName, setSelectedProgramName] = useState<string>('');
     const [enrollmentDate, setEnrollmentDate] = useState<Date | null>(null);
-    const [locationUuid, setLocationUuid] = useState<string>('');
+    const [locationUuid, setLocationUuid] = useState<string>(sessionLocation?.uuid || '');
     const [selectedLocationName, setSelectedLocationName] = useState<string>('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [questionAnswers, setQuestionAnswers] = useState<Record<string, string>>({});
 
     const { programs, isLoading: isLoadingPrograms } = usePrograms();
     const { enrollments, isLoading: isLoadingEnrollments, mutate: mutateEnrollments } = useEnrollments(patientUuid);
-    const { locations, isLoading: isLoadingLocations } = useLocations();
     const { config: programConfig, isLoading: isLoadingProgramConfig } = usePatientProgramConfig(patientUuid);
 
+    // Load selected location name for review/success screens when locationUuid changes
+    useEffect(() => {
+        async function loadLocationName() {
+            if (!locationUuid) {
+                setSelectedLocationName('');
+                return;
+            }
+
+            try {
+                const response = await openmrsFetch<{ display?: string }>(
+                    `${restBaseUrl}/location/${locationUuid}?v=custom:(uuid,name,display)`,
+                );
+                setSelectedLocationName(response.data?.display || '');
+            } catch (error) {
+                // If location lookup fails, keep name empty; enrollment can still proceed
+                // Optionally log to console for debugging
+                // console.error('Failed to load location name', error);
+            }
+        }
+
+        void loadLocationName();
+    }, [locationUuid]);
+
+
+    console.log("enrollments",enrollments);
     // Active enrollments (matching patient care component)
     const activeEnrollments = useMemo(
         () => enrollments.filter((e) => !e.dateCompleted),
@@ -94,13 +135,21 @@ const ProgramManagerWorkspace: React.FC<ProgramManagerWorkspaceProps> = ({ close
     }, [programConfig, programs, activeEnrollments]);
 
     // Filter out programs that patient is already enrolled in (active enrollments)
-    // Keep programs that are incompatible visible but disabled in the selector
+    // Also filter out programs that are incompatible with active enrollments
     const availablePrograms = useMemo(() => {
         const activeEnrollmentProgramUuids = new Set(
             activeEnrollments.map((e) => e.program.uuid),
         );
-        return programs.filter((p) => !activeEnrollmentProgramUuids.has(p.uuid));
-    }, [programs, activeEnrollments]);
+        return programs.filter((p) => {
+            // Exclude programs the patient is already enrolled in
+            if (activeEnrollmentProgramUuids.has(p.uuid)) {
+                return false;
+            }
+            // Exclude programs that are incompatible with active enrollments
+            const incompatibleWithNames = programIncompatibilities[p.uuid] || [];
+            return incompatibleWithNames.length === 0;
+        });
+    }, [programs, activeEnrollments, programIncompatibilities]);
 
     const getCurrentStepIndex = (step: WizardStep): number => {
         const steps: WizardStep[] = ['select', 'details', 'review', 'success'];
@@ -109,19 +158,6 @@ const ProgramManagerWorkspace: React.FC<ProgramManagerWorkspaceProps> = ({ close
 
     const handleProgramSelect = (programUuid: string) => {
         if (!programUuid) {
-            return;
-        }
-
-        // Prevent selecting incompatible programs (defensive, items are also disabled)
-        if (programIncompatibilities[programUuid]?.length) {
-            showSnackbar({
-                kind: 'error',
-                title: t('programManager.incompatibleProgram', 'Program Incompatible'),
-                subtitle: t(
-                    'programManager.incompatibleProgramDesc',
-                    'This program cannot be enrolled because it is incompatible with existing enrollments.',
-                ),
-            });
             return;
         }
 
@@ -298,7 +334,7 @@ const ProgramManagerWorkspace: React.FC<ProgramManagerWorkspaceProps> = ({ close
         { key: 'location', header: t('programManager.location', 'Location') },
         { key: 'actions', header: t('programManager.actions', 'Actions') },
     ];
-
+    console.log("activeEnrollments",activeEnrollments);
     const enrollmentRows = activeEnrollments.map((enrollment) => ({
         id: enrollment.uuid,
         program: enrollment.program.display,
@@ -316,7 +352,7 @@ const ProgramManagerWorkspace: React.FC<ProgramManagerWorkspaceProps> = ({ close
         ),
     }));
 
-    if (isLoadingPrograms || isLoadingEnrollments || isLoadingLocations || isLoadingProgramConfig) {
+    if (isLoadingPrograms || isLoadingEnrollments || isLoadingProgramConfig) {
     return (
             <Workspace2 title={t('programManager.title', 'Program Manager')}>
                 <div className={styles.workspaceContent}>
@@ -335,54 +371,34 @@ const ProgramManagerWorkspace: React.FC<ProgramManagerWorkspaceProps> = ({ close
                         {t('programManager.selectProgramDescription', 'Choose a program to enroll the patient in')}
                     </p>
                 <FormGroup legendText={t('programManager.selectProgram', 'Select Program')}>
-                        <Select
+                        <ComboBox
                             id="program-select"
-                            labelText={t('programManager.program', 'Program')}
-                            value={selectedProgram}
-                            onChange={(e) => handleProgramSelect(e.target.value)}
-                        >
-                            <SelectItem
-                                disabled
-                                hidden
-                                value=""
-                                text={t('programManager.chooseProgram', 'Choose a program')}
-                            />
-                            {availablePrograms.map((program) => {
-                                const incompatibleWithNames = programIncompatibilities[program.uuid] || [];
-                                const isIncompatible = incompatibleWithNames.length > 0;
-                                const label = isIncompatible
-                                    ? `${program.display} (${t(
-                                          'programManager.incompatibleLabel',
-                                          'Incompatible',
-                                      )})`
-                                    : program.display;
-
-                                return (
-                                    <SelectItem
-                                        key={program.uuid}
-                                        value={program.uuid}
-                                        text={label}
-                                        disabled={isIncompatible}
-                                    />
-                                );
-                            })}
-                    </Select>
+                            titleText={t('programManager.program', 'Program')}
+                            placeholder={t('programManager.chooseProgram', 'Choose a program')}
+                            items={availablePrograms.map((program) => ({
+                                id: program.uuid,
+                                text: program.display,
+                            }))}
+                            itemToString={(item) => (item ? item.text : '')}
+                            onChange={({ selectedItem }) => {
+                                if (selectedItem) {
+                                    handleProgramSelect(selectedItem.id);
+                                } else {
+                                    // Clear selection if user clears the combobox
+                                    setSelectedProgram('');
+                                    setSelectedProgramName('');
+                                }
+                            }}
+                            selectedItem={
+                                selectedProgram
+                                    ? {
+                                          id: selectedProgram,
+                                          text: availablePrograms.find((p) => p.uuid === selectedProgram)?.display || '',
+                                      }
+                                    : null
+                            }
+                        />
                 </FormGroup>
-                    {selectedProgram && programIncompatibilities[selectedProgram]?.length && (
-                        <Tile className={styles.infoTile}>
-                            <p className={styles.infoText}>
-                                {t(
-                                    'programManager.incompatibleWith',
-                                    'This program is incompatible with the following active programs:',
-                                )}
-                            </p>
-                            <ul className={styles.infoList}>
-                                {programIncompatibilities[selectedProgram].map((name) => (
-                                    <li key={name}>{name}</li>
-                                ))}
-                            </ul>
-                        </Tile>
-                    )}
                     <div className={styles.wizardActions}>
                         <Button kind="secondary" onClick={closeWorkspace}>
                             {t('cancel', 'Cancel')}
@@ -491,26 +507,13 @@ const ProgramManagerWorkspace: React.FC<ProgramManagerWorkspaceProps> = ({ close
                 </FormGroup>
 
                         <FormGroup legendText={t('programManager.location', 'Location')}>
-                            <Select
-                                id="location-select"
-                                labelText={t('programManager.location', 'Location')}
-                                value={locationUuid}
-                                onChange={(e) => {
-                                    const location = locations.find((l) => l.uuid === e.target.value);
-                                    setLocationUuid(e.target.value);
-                                    setSelectedLocationName(location?.display || '');
-                                }}
-                            >
-                                <SelectItem
-                                    disabled
-                                    hidden
-                                    value=""
-                                    text={t('programManager.chooseLocation', 'Choose a location (optional)')}
+                            <div className={styles.locationPickerWrapper}>
+                                <LocationPicker
+                                    selectedLocationUuid={locationUuid}
+                                    defaultLocationUuid={sessionLocation?.uuid}
+                                    onChange={(newLocationUuid) => setLocationUuid(newLocationUuid || '')}
                                 />
-                                {locations.map((location) => (
-                                    <SelectItem key={location.uuid} value={location.uuid} text={location.display} />
-                                ))}
-                            </Select>
+                            </div>
                         </FormGroup>
                     </Form>
                     <div className={styles.wizardActions}>
@@ -630,7 +633,7 @@ const ProgramManagerWorkspace: React.FC<ProgramManagerWorkspaceProps> = ({ close
     };
 
     const showWizard = currentStep !== 'success' && availablePrograms.length > 0;
-
+    
     return (
         <Workspace2 title={t('programManager.title', 'Program Manager')}>
             <div className={styles.workspaceContent}>

@@ -25,10 +25,28 @@ export function useEnrollments(patientUuid: string) {
         ? `${restBaseUrl}/programenrollment?patient=${patientUuid}&v=${customRepresentation}`
         : null;
 
-    const { data, error, isLoading, mutate } = useSWR<{ data: { results: any[] } }>(enrollmentsUrl, openmrsFetch);
+    const { data, error, isLoading, mutate } = useSWR<{ data: any }>(enrollmentsUrl, openmrsFetch);
 
+    // Handle different response structures:
+    // 1. { results: [...] } - standard OpenMRS REST API format
+    // 2. [...] - direct array (some endpoints return this)
+    // 3. { data: { results: [...] } } - nested structure
+    let enrollments: any[] = [];
+    if (data?.data) {
+        const responseData = data.data;
+        
+        // If it's an array directly, use it
+        if (Array.isArray(responseData)) {
+            enrollments = responseData;
+        }
+        // If it has a results array, use that
+        else if (responseData.results && Array.isArray(responseData.results)) {
+            enrollments = responseData.results;
+        }
+    }
+console.log("enrollments api",enrollments);
     return {
-        enrollments: data?.data?.results || [],
+        enrollments,
         error,
         isLoading,
         mutate,
@@ -119,15 +137,44 @@ async function fetchAllLocations(customRepresentation: string): Promise<any[]> {
         const links = responseData?.links || [];
         const nextLink = links.find((link) => link.rel === 'next');
         if (nextLink) {
-            // Use the URI from the link - openmrsFetch should handle full URLs
-            // If it's a full URL, we need to extract just the path part
             const uri = nextLink.uri;
+            
+            // Extract the path from the URI (handles both full URLs and relative paths)
+            let pathToNormalize: string;
             if (uri.startsWith('http')) {
-                // Extract the path part after the domain
                 const urlObj = new URL(uri);
-                nextUrl = urlObj.pathname + urlObj.search;
+                pathToNormalize = urlObj.pathname + urlObj.search;
             } else {
-                nextUrl = uri;
+                pathToNormalize = uri;
+            }
+            
+            // Normalize the path to be relative to restBaseUrl
+            // restBaseUrl is '/openmrs/ws/rest/v1'
+            // We need to extract just the resource path (e.g., '/location?...')
+            if (pathToNormalize.startsWith(restBaseUrl)) {
+                // Path starts with restBaseUrl, extract the relative part
+                nextUrl = pathToNormalize.substring(restBaseUrl.length);
+            } else {
+                // Try to find and remove '/openmrs/ws/rest/v1' pattern
+                // This handles cases where the path might have /openmrs prefix
+                const patternToRemove = '/openmrs/ws/rest/v1';
+                if (pathToNormalize.startsWith(patternToRemove)) {
+                    nextUrl = pathToNormalize.substring(patternToRemove.length);
+                } else if (pathToNormalize.startsWith('/openmrs')) {
+                    // Path starts with /openmrs but not the full pattern
+                    // Extract everything after /openmrs
+                    const afterOpenmrs = pathToNormalize.substring('/openmrs'.length);
+                    // Check if it continues with /ws/rest/v1
+                    if (afterOpenmrs.startsWith('/ws/rest/v1')) {
+                        nextUrl = afterOpenmrs.substring('/ws/rest/v1'.length);
+                    } else {
+                        // Just remove /openmrs prefix
+                        nextUrl = afterOpenmrs;
+                    }
+                } else {
+                    // Path doesn't start with /openmrs, use as-is
+                    nextUrl = pathToNormalize;
+                }
             }
         } else {
             nextUrl = null;

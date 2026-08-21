@@ -6,6 +6,13 @@
   height: 100%;
   overflow-y: auto;
   padding: layout.$spacing-05;
+  max-width: 100%;
+}
+
+// Make the workspace wider
+:global([data-workspace-name="program-manager-workspace"]) {
+  width: 60rem !important;
+  max-width: 90vw !important;
 }
 
 .section {
@@ -22,7 +29,7 @@
 }
 
 .form {
-  max-width: 50rem;
+  max-width: 100%;
   margin-top: layout.$spacing-05;
 
   > * + * {

@@ -47,7 +47,8 @@
   "workspaceWindows2": [
     {
       "name": "program-manager-window",
-      "group": "patient-chart"
+      "group": "patient-chart",
+      "preferredWidth": "60rem"
     },
     {
       "name": "ampath-visit-window",

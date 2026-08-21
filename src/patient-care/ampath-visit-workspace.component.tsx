@@ -232,11 +232,6 @@ const AmpathVisitWorkspace: React.FC<AmpathVisitWorkspaceProps> = (props) => {
                                     />
                                 ))}
                             </Select>
-                            {selectedVisitType && allowedVisitTypes.find((vt) => vt.uuid === selectedVisitType)?.message && (
-                                <p style={{ fontSize: '0.875rem', color: '#525252', marginTop: '0.5rem' }}>
-                                    {allowedVisitTypes.find((vt) => vt.uuid === selectedVisitType)?.message}
-                                </p>
-                            )}
                         </FormGroup>
                     )}
 
