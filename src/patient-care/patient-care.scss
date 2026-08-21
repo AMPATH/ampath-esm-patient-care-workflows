@@ -1,0 +1,20 @@
+.tabContainer {
+  max-width: 100%;
+}
+
+.tabContainer div[role='tabpanel'] {
+  padding: 0 !important;
+}
+
+.tabContainer li button {
+  width: 100% !important;
+}
+
+.scrollableTabList {
+  overflow-x: auto;
+  white-space: nowrap;
+  display: flex;
+  flex-wrap: nowrap;
+  max-width: 100%;
+  width: 100%;
+}

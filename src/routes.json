@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json.openmrs.org/routes.schema.json",
+  "backendDependencies": {
+    "fhir2": ">=1.2",
+    "webservices.rest": ">=2.2.0"
+  },
+  "extensions": [
+    {
+      "name": "patient-care-dashboard-link",
+      "slot": "patient-chart-dashboard-slot",
+      "component": "patientCareDashboardLink",
+      "meta": {
+        "slot": "patient-care-dashboard-slot",
+        "path": "patient-care",
+        "layoutMode": "anchored"
+      },
+      "order": 10,
+      "online": true,
+      "offline": true
+    },
+    {
+      "name": "patient-care-root",
+      "slot": "patient-care-dashboard-slot",
+      "component": "patientCareExtensionRoot",
+      "online": true,
+      "offline": true
+    }
+  ],
+  "pages": [
+    {
+      "component": "root",
+      "route": "root"
+    }
+  ],
+  "workspaces2": [
+    {
+      "name": "program-manager-workspace",
+      "component": "programManagerWorkspace",
+      "window": "program-manager-window"
+    },
+    {
+      "name": "ampath-visit-workspace",
+      "component": "ampathVisitWorkspace",
+      "window": "ampath-visit-window"
+    }
+  ],
+  "workspaceWindows2": [
+    {
+      "name": "program-manager-window",
+      "group": "patient-chart"
+    },
+    {
+      "name": "ampath-visit-window",
+      "group": "patient-chart"
+    }
+  ]
+}

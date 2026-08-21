@@ -1,0 +1,137 @@
+@use '@carbon/layout';
+@use '@carbon/type';
+@use '@openmrs/esm-styleguide/src/vars' as *;
+
+.workspaceContent {
+  height: 100%;
+  overflow-y: auto;
+  padding: layout.$spacing-05;
+}
+
+.section {
+  margin-bottom: layout.$spacing-07;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.sectionTitle {
+  @include type.type-style('heading-03');
+  margin-bottom: layout.$spacing-05;
+}
+
+.form {
+  max-width: 50rem;
+  margin-top: layout.$spacing-05;
+
+  > * + * {
+    margin-top: layout.$spacing-06;
+  }
+}
+
+.actions {
+  display: flex;
+  gap: layout.$spacing-05;
+  margin-top: layout.$spacing-07;
+  justify-content: flex-end;
+  padding-top: layout.$spacing-05;
+  border-top: 1px solid var(--omrs-color-ink-low-contrast);
+}
+
+.emptyState {
+  text-align: center;
+  padding: layout.$spacing-07;
+  color: var(--omrs-color-ink-medium-contrast);
+}
+
+.completedBadge {
+  @include type.type-style('label-01');
+  color: var(--omrs-color-ink-medium-contrast);
+  font-style: italic;
+}
+
+.progressIndicator {
+  margin-bottom: layout.$spacing-06;
+}
+
+.wizardStep {
+  padding: layout.$spacing-05;
+}
+
+.stepTitle {
+  @include type.type-style('heading-04');
+  margin-bottom: layout.$spacing-03;
+}
+
+.stepDescription {
+  @include type.type-style('body-01');
+  color: var(--omrs-color-ink-medium-contrast);
+  margin-bottom: layout.$spacing-06;
+}
+
+.wizardActions {
+  display: flex;
+  gap: layout.$spacing-05;
+  margin-top: layout.$spacing-07;
+  justify-content: flex-end;
+  padding-top: layout.$spacing-05;
+  border-top: 1px solid var(--omrs-color-ink-low-contrast);
+}
+
+.reviewList {
+  margin-top: layout.$spacing-05;
+  margin-bottom: layout.$spacing-05;
+
+  dt {
+    @include type.type-style('heading-compact-01');
+    margin-bottom: layout.$spacing-02;
+  }
+
+  dd {
+    @include type.type-style('body-01');
+    margin-bottom: layout.$spacing-05;
+  }
+}
+
+.successState {
+  text-align: center;
+  padding: layout.$spacing-05;
+}
+
+.reviewList {
+  margin-top: layout.$spacing-05;
+  margin-bottom: layout.$spacing-05;
+}
+
+.reviewItem {
+  margin-bottom: layout.$spacing-05;
+  padding-bottom: layout.$spacing-05;
+  border-bottom: 1px solid var(--omrs-color-ink-low-contrast);
+
+  &:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+}
+
+.reviewLabel {
+  @include type.type-style('heading-compact-01');
+  margin-bottom: layout.$spacing-02;
+  color: var(--omrs-color-ink-medium-contrast);
+}
+
+.reviewValue {
+  @include type.type-style('body-01');
+  color: var(--omrs-color-ink-high-contrast);
+}
+
+.locationPickerWrapper {
+  max-height: 200px;
+  overflow-y: auto;
+  
+  :global(.cds--list-box__menu) {
+    max-height: 180px;
+  }
+}
