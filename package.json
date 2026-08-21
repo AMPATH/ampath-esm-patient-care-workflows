@@ -31,14 +31,15 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/openmrs/openmrs-esm-template-app.git"
+    "url": "git+https://github.com/AMPATH/ampath-esm-patient-care-workflows.git"
   },
-  "homepage": "https://github.com/openmrs/openmrs-esm-template-app#readme",
+  "homepage": "https://github.com/AMPATH/ampath-esm-patient-care-workflows#readme",
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   },
   "bugs": {
-    "url": "https://github.com/openmrs/openmrs-esm-template-app/issues"
+    "url": "https://github.com/AMPATH/ampath-esm-patient-care-workflows/issues"
   },
   "dependencies": {
     "@carbon/react": "^1.83.0",
