@@ -110,6 +110,4 @@ jobs:
 
       - name: 📦 Publish to npm with latest tag
         run: yarn npm publish --tag latest --access public
-        env:
-          YARN_NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
 
