@@ -12,7 +12,7 @@ on:
 #   Organization: AMPATH
 #   Repository:   ampath-esm-patient-care-workflows
 #   Workflow:     publish-ampath.yml
-#   Environment:  (leave blank unless this job sets `environment:` below)
+#   Environment:  (leave blank)
 permissions:
   contents: read
   id-token: write
@@ -65,9 +65,11 @@ jobs:
       - name: 🛠️ Setup Node.js
         uses: actions/setup-node@v4
         with:
+          # Trusted publishing needs Node >= 22.14 and npm >= 11.5.1
           node-version: '24'
-          registry-url: 'https://registry.npmjs.org'
-          package-manager-cache: false
+          # Do NOT set registry-url: it injects NODE_AUTH_TOKEN=XXXXX... into the
+          # job env and writes always-auth into .npmrc, which makes npm skip OIDC
+          # and fail with a misleading 404 on PUT.
 
       - name: ⬆️ Ensure npm supports Trusted Publisher OIDC
         run: |
@@ -81,11 +83,11 @@ jobs:
           script: |
             const token = await core.getIDToken('npm:registry.npmjs.org');
             const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString());
+            const workflowFile = (payload.workflow_ref || '').split('@')[0].split('/').pop();
             core.info(`repository: ${payload.repository}`);
             core.info(`workflow_ref: ${payload.workflow_ref}`);
             core.info(`ref: ${payload.ref}`);
             core.info(`environment: ${payload.environment ?? '(none — leave blank on npm)'}`);
-            const workflowFile = (payload.workflow_ref || '').split('/').pop()?.split('@')[0];
             core.info(`workflow filename for npm: ${workflowFile}`);
 
       - name: 📦 Install dependencies
@@ -110,8 +112,10 @@ jobs:
         env:
           HUSKY: '0'
         run: |
-          # Publish must use OIDC — do not pass NODE_AUTH_TOKEN / NPM_TOKEN here.
-          npm publish --tag next --access public
+          # Any leftover token / always-auth config forces token auth and blocks OIDC.
+          unset NODE_AUTH_TOKEN NPM_TOKEN YARN_NPM_AUTH_TOKEN NPM_CONFIG_USERCONFIG
+          rm -f "$HOME/.npmrc" .npmrc
+          npm publish --tag next --access public --registry https://registry.npmjs.org/
 
   publish-release:
     runs-on: ubuntu-latest
@@ -131,8 +135,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24'
-          registry-url: 'https://registry.npmjs.org'
-          package-manager-cache: false
 
       - name: ⬆️ Ensure npm supports Trusted Publisher OIDC
         run: |
@@ -146,11 +148,11 @@ jobs:
           script: |
             const token = await core.getIDToken('npm:registry.npmjs.org');
             const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString());
+            const workflowFile = (payload.workflow_ref || '').split('@')[0].split('/').pop();
             core.info(`repository: ${payload.repository}`);
             core.info(`workflow_ref: ${payload.workflow_ref}`);
             core.info(`ref: ${payload.ref}`);
             core.info(`environment: ${payload.environment ?? '(none — leave blank on npm)'}`);
-            const workflowFile = (payload.workflow_ref || '').split('/').pop()?.split('@')[0];
             core.info(`workflow filename for npm: ${workflowFile}`);
 
       - name: 📦 Install dependencies
@@ -169,4 +171,7 @@ jobs:
       - name: 📦 Publish to npm with latest tag
         env:
           HUSKY: '0'
-        run: npm publish --tag latest --access public
+        run: |
+          unset NODE_AUTH_TOKEN NPM_TOKEN YARN_NPM_AUTH_TOKEN NPM_CONFIG_USERCONFIG
+          rm -f "$HOME/.npmrc" .npmrc
+          npm publish --tag latest --access public --registry https://registry.npmjs.org/
