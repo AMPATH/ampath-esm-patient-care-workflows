@@ -8,7 +8,11 @@ on:
       - created
 
 # Trusted Publisher (OIDC) requires id-token: write.
-# Workflow filename must match what is configured on npmjs.com (publish-ampath.yml).
+# On npmjs.com → @ampath/esm-patient-care-workflows-app → Settings → Trusted Publisher:
+#   Organization: AMPATH
+#   Repository:   ampath-esm-patient-care-workflows
+#   Workflow:     publish-ampath.yml
+#   Environment:  (leave blank unless this job sets `environment:` below)
 permissions:
   contents: read
   id-token: write
@@ -61,9 +65,29 @@ jobs:
       - name: 🛠️ Setup Node.js
         uses: actions/setup-node@v4
         with:
-          # Trusted publishing needs Node >= 22.14 and npm >= 11.5.1
           node-version: '24'
           registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
+
+      - name: ⬆️ Ensure npm supports Trusted Publisher OIDC
+        run: |
+          npm install -g npm@latest
+          node --version
+          npm --version
+
+      - name: 🔍 Print OIDC identity (compare to npm Trusted Publisher config)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const core = require('@actions/core');
+            const token = await core.getIDToken('npm:registry.npmjs.org');
+            const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString());
+            core.info(`repository: ${payload.repository}`);
+            core.info(`workflow_ref: ${payload.workflow_ref}`);
+            core.info(`ref: ${payload.ref}`);
+            core.info(`environment: ${payload.environment ?? '(none — leave blank on npm)'}`);
+            const workflowFile = (payload.workflow_ref || '').split('/').pop()?.split('@')[0];
+            core.info(`workflow filename for npm: ${workflowFile}`);
 
       - name: 📦 Install dependencies
         run: yarn install --immutable
@@ -84,9 +108,11 @@ jobs:
         run: yarn build
 
       - name: 📦 Publish to npm with next tag
-        # Use npm (not yarn) so OIDC Trusted Publisher auth works.
-        # Do not set NODE_AUTH_TOKEN / YARN_NPM_AUTH_TOKEN here.
-        run: npm publish --tag next --access public
+        env:
+          HUSKY: '0'
+        run: |
+          # Publish must use OIDC — do not pass NODE_AUTH_TOKEN / NPM_TOKEN here.
+          npm publish --tag next --access public
 
   publish-release:
     runs-on: ubuntu-latest
@@ -107,6 +133,27 @@ jobs:
         with:
           node-version: '24'
           registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
+
+      - name: ⬆️ Ensure npm supports Trusted Publisher OIDC
+        run: |
+          npm install -g npm@latest
+          node --version
+          npm --version
+
+      - name: 🔍 Print OIDC identity (compare to npm Trusted Publisher config)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const core = require('@actions/core');
+            const token = await core.getIDToken('npm:registry.npmjs.org');
+            const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString());
+            core.info(`repository: ${payload.repository}`);
+            core.info(`workflow_ref: ${payload.workflow_ref}`);
+            core.info(`ref: ${payload.ref}`);
+            core.info(`environment: ${payload.environment ?? '(none — leave blank on npm)'}`);
+            const workflowFile = (payload.workflow_ref || '').split('/').pop()?.split('@')[0];
+            core.info(`workflow filename for npm: ${workflowFile}`);
 
       - name: 📦 Install dependencies
         run: yarn install --immutable
@@ -122,4 +169,6 @@ jobs:
         run: yarn build
 
       - name: 📦 Publish to npm with latest tag
+        env:
+          HUSKY: '0'
         run: npm publish --tag latest --access public
